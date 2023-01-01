@@ -214,22 +214,36 @@ class WASMCodeGen:
 
     def visit_While(self, node: While):
         self._ctx.enter_block('while')
-        self._ctx.add_instruction(('while', 'emptyblock'))
+        self._ctx.add_instruction(('block', 'emptyblock'))
+        self._ctx.add_instruction(('loop', 'emptyblock'))
 
-        
+        # Test the boolean expression
+        self.visit(node.expr)
 
+        # If the boolean expression is false, jump out of the block block
+        self._ctx.add_instruction(('i32.eqz',))
+        self._ctx.add_instruction(('br_if', 1))
 
+        for stmt in node.stmts:
+            self.visit(stmt)
+
+        # jump to the beginning of loop block
+        self._ctx.add_instruction(('br', 0))
+
+        self._ctx.add_instruction(('end',))  # End of loop block
+        self._ctx.add_instruction(('end',))  # End of block block
         self._ctx.exit_block('while')
-
 
     def visit_For(self, node: For):
         pass
 
     def visit_Continue(self, node: Continue):
-        pass
+        loop_level = self._ctx.get_adjacent_loop_block_level()
+        self._ctx.add_instruction(('br', loop_level))
 
     def visit_Break(self, node: Break):
-        pass
+        block_level = self._ctx.get_adjacent_loop_block_level() + 1
+        self._ctx.add_instruction(('br', block_level))
 
     def visit_Return(self, node: Return):
         if node.value is not None:
