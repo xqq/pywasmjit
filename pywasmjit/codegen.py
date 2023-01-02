@@ -159,7 +159,7 @@ class WASMCodeGen:
         for stmt in node.stmts:
             self.visit(stmt)
 
-        if node.orelse is not None:
+        if node.orelse is not None and len(node.orelse) > 0:
             self._ctx.add_instruction(('else',))
             for stmt in node.orelse:
                 self.visit(stmt)
