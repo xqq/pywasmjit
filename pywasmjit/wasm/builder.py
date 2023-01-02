@@ -1,4 +1,5 @@
 from typing import Optional
+from collections import OrderedDict
 from .components import *
 from .instructions import OPCODES
 
@@ -14,7 +15,7 @@ class FunctionContext:
         self.params = params
 
         self.instructions: list[tuple[str, ...]] = []
-        self.locals: dict[str, [int, WASMType]] = {}     # name => (index, type)
+        self.locals: OrderedDict[str, [int, WASMType]] = OrderedDict()  # name => (index, type)
         self._local_count: int = 0
         self._block_stack: list[str] = []
 
