@@ -235,7 +235,54 @@ class WASMCodeGen:
         self._ctx.exit_block('while')
 
     def visit_For(self, node: For):
-        pass
+        loopvar_ty = self.infer(node.loopvar)
+        begin_ty = self.infer(node.begin)
+        end_ty = self.infer(node.end)
+        step_ty = self.infer(node.step)
+
+        loopvar_wasmty = pytype_to_wasmtype(loopvar_ty)
+
+        begin_stub = self._ctx.new_stub(pytype_to_wasmtype(begin_ty))
+        end_stub = self._ctx.new_stub(pytype_to_wasmtype(end_ty))
+        step_stub = self._ctx.new_stub(pytype_to_wasmtype(step_ty))
+
+        self.visit(node.begin)
+        self.visit(node.end)
+        self.visit(node.step)
+        self._ctx.add_instruction(('local.set', step_stub))
+        self._ctx.add_instruction(('local.set', end_stub))
+        self._ctx.add_instruction(('local.set', begin_stub))
+
+        loopvar = self._ctx.get_local_index(node.loopvar.id)
+        if loopvar == -1:
+            loopvar = self._ctx.new_local(node.loopvar.id, loopvar_wasmty)
+
+        self._ctx.enter_block('for')
+
+        self._ctx.add_instruction(('local.get', begin_stub))
+        self._ctx.add_instruction(('local.set', loopvar))
+        self._ctx.add_instruction(('block', 'emptyblock'))
+        self._ctx.add_instruction(('loop', 'emptyblock'))
+        self._ctx.add_instruction(('local.get', loopvar))
+        self._ctx.add_instruction(('local.get', end_stub))
+
+        ge_op = 'ge' if loopvar_wasmty == 'f64' else 'ge_s'
+        self._ctx.add_instruction((f'{loopvar_wasmty}.{ge_op}',))
+        self._ctx.add_instruction(('br_if', 1))  # branch to end of block block (break)
+
+        for stmt in node.stmts:
+            self.visit(stmt)
+
+        self._ctx.add_instruction(('local.get', loopvar))
+        self._ctx.add_instruction(('local.get', step_stub))
+        self._ctx.add_instruction((f'{loopvar_wasmty}.add',))
+        self._ctx.add_instruction(('local.set', loopvar))
+        self._ctx.add_instruction(('br', 0))  # branch to the beginning of loop block
+
+        self._ctx.add_instruction(('end',))  # End of loop block
+        self._ctx.add_instruction(('end',))  # End of block block
+
+        self._ctx.exit_block('for')
 
     def visit_Continue(self, node: Continue):
         loop_level = self._ctx.get_adjacent_loop_block_level()
