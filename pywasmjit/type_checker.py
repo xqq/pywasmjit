@@ -173,8 +173,12 @@ class TypeChecker:
 
     def visit_UnaryOp(self, node: UnaryOp):
         ty = self.visit(node.right)
-        if ty != 'int' and ty != 'float':
-            raise RuntimeError('Unary operation only support for int / float type')
+        if ty in ('int', 'float'):
+            if node.op != ast.USub:
+                raise RuntimeError(f'Invalid UnaryOp \'{node.op.__name__}\' for type \'{ty}\'')
+        elif ty == 'bool':
+            if node.op != ast.Not:
+                raise RuntimeError(f'Invalid UnaryOp \'{node.op.__name__}\' for type \'{ty}\'')
         return ty
 
     def visit_While(self, node: While):

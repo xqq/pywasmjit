@@ -238,15 +238,18 @@ class WASMCodeGen:
     def visit_UnaryOp(self, node: UnaryOp):
         ty = self.infer(node)
 
-        if ty == 'int':
-            self._ctx.add_instruction(('i32.const', 0))
-            self.visit(node.right)
-            self._ctx.add_instruction(('i32.sub',))
-        else:  # float
-            self.visit(node.right)
-            self._ctx.add_instruction(('f64.neg',))
-
-        # TODO: not operator support for boolean expression
+        if node.op == ast.USub:
+            if ty == 'int':
+                self._ctx.add_instruction(('i32.const', 0))
+                self.visit(node.right)
+                self._ctx.add_instruction(('i32.sub',))
+            elif ty == 'float':
+                self.visit(node.right)
+                self._ctx.add_instruction(('f64.neg',))
+        elif node.op == ast.Not:
+            if ty == 'bool':
+                self.visit(node.right)
+                self._ctx.add_instruction(('i32.eqz',))
 
     def visit_While(self, node: While):
         self._ctx.enter_block('while')
