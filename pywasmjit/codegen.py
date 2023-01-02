@@ -148,7 +148,7 @@ class WASMCodeGen:
         return self.infer(node)
 
     def visit_Expr(self, node: Expr):
-        self.visit(node)
+        self.visit(node.value)
 
     def infer_Compare(self, node: Compare):
         return 'bool'
