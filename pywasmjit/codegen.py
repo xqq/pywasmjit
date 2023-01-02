@@ -69,7 +69,43 @@ class WASMCodeGen:
             return None
 
     def visit_FuncCall(self, node: FuncCall):
-        pass
+        if node.func_name == 'int':
+            # int()
+            input_ty = self.infer(node.args[0])
+            self.visit(node.args[0])
+            if input_ty == 'int' or input_ty == 'bool':
+                # Convert int/bool to int
+                pass
+            elif input_ty == 'float':
+                # Convert float to int
+                self._ctx.add_instruction(('i32.trunc_f64_s',))
+        elif node.func_name == 'float':
+            # float()
+            input_ty = self.infer(node.args[0])
+            self.visit(node.args[0])
+            if input_ty == 'float':
+                # Convert float to float, no-op
+                pass
+            elif input_ty == 'int' or input_ty == 'bool':
+                # Convert int to float
+                self._ctx.add_instruction(('f64.convert_i32_s',))
+        elif node.func_name == 'bool':
+            # bool()
+            input_ty = self.infer(node.args[0])
+            self.visit(node.args[0])
+            if input_ty == 'int' or input_ty == 'bool':
+                pass
+            elif input_ty == 'float':
+                # Convert float to bool
+                # if value != 0.0, it should be True
+                self._ctx.add_instruction(('f64.const', 0.0))
+                self._ctx.add_instruction(('f64.ne',))
+        elif node.func_name == 'print':
+            # TODO: print
+            pass
+        else:
+            # TODO: Custom functions
+            pass
 
     def infer_Var(self, node: Var):
         return node.type
