@@ -194,6 +194,9 @@ class TypeChecker:
         end_ty = self.visit(node.end)
         step_ty = self.visit(node.step)
 
+        if begin_ty != 'int' or end_ty != 'int' or step_ty != 'int':
+            raise RuntimeError('For loop range could only be \'int\'')
+
         if node.loopvar.type is None:
             # Loop variable is not type-annotated. This is the common case
             # The type of loop variable should be same as begin
@@ -203,6 +206,9 @@ class TypeChecker:
             loopvar_ty = node.loopvar.type
             if loopvar_ty != begin_ty or loopvar_ty != end_ty or loopvar_ty != step_ty:
                 raise RuntimeError('For loop variable type mismatch')
+
+        if node.loopvar.type not in ('int', 'float'):
+            raise RuntimeError('For loop variable could only be \'int\' or \'float\'')
 
         self._locals[node.loopvar.id] = node.loopvar.type
 
