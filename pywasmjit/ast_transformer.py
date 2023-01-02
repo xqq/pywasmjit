@@ -148,6 +148,11 @@ class ASTTransformer(ast.NodeTransformer):
         return While(expr, stmts)
 
     def visit_For(self, node: ast.For):
+        if node.orelse:
+            raise SyntaxError('For loop does not support orelse')
+        if not isinstance(node.target, ast.Name):
+            raise SyntaxError('For loop only support single iterable (loop variable)')
+
         loopvar = self.visit(node.target)
 
         if node.iter.func.id in ['range', 'xrange']:
