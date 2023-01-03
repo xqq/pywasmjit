@@ -71,30 +71,48 @@ class FunctionContext:
 
 
 class Builder:
-    __slots__ = ['_functions', '_imported_functions', '_current_func_ctx']
+    __slots__ = ['_functions', '_imported_functions', '_current_func_ctx', '_module']
 
     def __init__(self):
         self._functions: list[Function] = []
         self._imported_functions: list[ImportedFunction] = []
-        self._current_func_ctx: Optional[FunctionContext] = None
+        self._module: Optional[Module] = None
         pass
 
-    # TODO: Useless?
-    def start_function(self, name: str, is_export: bool, return_type: str,
-                       params: list[tuple[str, WASMType]]) -> FunctionContext:
-        assert self._current_func_ctx is None
-        ctx = self._current_func_ctx = FunctionContext(name, is_export, return_type, params)
-        return ctx
+    def add_function(self, ctx: FunctionContext):
+        wasm_params = [param[1] for param in ctx.params]
+        wasm_return = []
+        if ctx.return_type is not None and ctx.return_type != 'None':
+            wasm_return = [ctx.return_type]
 
-    # TODO: Useless?
-    def end_function(self, ctx: FunctionContext):
-        assert self._current_func_ctx is not None
-        assert ctx == self._current_func_ctx
-        # TODO: Build FunctionContext into wf.Function
-        # TODO: Set self._current_func_ctx into None
+        wasm_locals = []
 
-    def set_entrypoint(self, name: str):
-        pass
+        for i, (name, local) in enumerate(ctx.locals.items()):
+            if i < len(wasm_params):
+                # Skip parameters (they are treated as local variables)
+                continue
+            wasm_locals.append(local[1])
+
+        func = Function(idname=ctx.func_name,
+                        params=wasm_params,
+                        returns=wasm_return,
+                        locals=wasm_locals,
+                        instructions=ctx.instructions,
+                        export=True)
+        self._functions.append(func)
+
+    def add_imported_function(self, func_name: str, params: list[WASMType],
+                              return_type: Optional[WASMType], modname: str, fieldname: str):
+        wasm_returns = []
+        if return_type is not None and return_type != 'None':
+            wasm_returns = [return_type]
+
+        func = ImportedFunction(idname=func_name,
+                                params=params,
+                                returns=wasm_returns,
+                                modname=modname,
+                                fieldname=fieldname)
+        self._imported_functions.append(func)
 
     def build(self):
         pass

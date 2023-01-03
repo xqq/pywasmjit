@@ -23,6 +23,10 @@ class WASMCodeGen:
         self._builder = Builder()
         self._ctx: Optional[FunctionContext] = None
 
+        self._builder.add_imported_function('print_int', [WASMType('i32')], None, 'js', 'print_int')
+        self._builder.add_imported_function('print_float', [WASMType('f64')], None, 'js', 'print_float')
+        self._builder.add_imported_function('print_bool', [WASMType('i32')], None, 'js', 'print_bool')
+
     def dump(self):
         self._ctx.dump_locals()
         self._ctx.dump_instructions()
@@ -57,7 +61,8 @@ class WASMCodeGen:
         for stmt in node.stmts:
             self.visit(stmt)
 
-        # TODO: Append function into builder
+        self._builder.add_function(self._ctx)
+        self._ctx = None
 
     def infer_FuncCall(self, node: FuncCall):
         if node.func_name in ('int', 'float', 'bool'):
@@ -101,8 +106,17 @@ class WASMCodeGen:
                 self._ctx.add_instruction(('f64.const', 0.0))
                 self._ctx.add_instruction(('f64.ne',))
         elif node.func_name == 'print':
-            # TODO: print
-            pass
+            # Call imported JavaScript function (print_int, print_float, print_bool)
+            input_ty = self.infer(node.args[0])
+            if input_ty == 'int':
+                self.visit(node.args[0])
+                self._ctx.add_instruction(('call', 0))
+            elif input_ty == 'float':
+                self.visit(node.args[0])
+                self._ctx.add_instruction(('call', 1))
+            elif input_ty == 'bool':
+                self.visit(node.args[0])
+                self._ctx.add_instruction(('call', 2))
         else:
             # TODO: Custom functions
             pass
