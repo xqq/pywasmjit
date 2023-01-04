@@ -3,6 +3,7 @@ from typing import Optional
 from .ast import *
 from .wasm.builder import Builder, FunctionContext
 from .wasm.components import WASMType
+from .utils import FunctionSignature
 
 
 def pytype_to_wasmtype(pytype: str):
@@ -22,10 +23,14 @@ class WASMCodeGen:
     def __init__(self):
         self._builder = Builder()
         self._ctx: Optional[FunctionContext] = None
+        self._func_signatures: dict[str, FunctionSignature] = {}  # func_name => FunctionSignature
+        self._js_funcs_imported = False
 
+    def _add_js_imported_functions(self):
         self._builder.add_imported_function('print_int', [WASMType('i32')], None, 'js', 'print_int')
         self._builder.add_imported_function('print_float', [WASMType('f64')], None, 'js', 'print_float')
         self._builder.add_imported_function('print_bool', [WASMType('i32')], None, 'js', 'print_bool')
+        self._js_funcs_imported = True
 
     def dump(self):
         self._ctx.dump_locals()
@@ -48,15 +53,21 @@ class WASMCodeGen:
     def visit_FuncDef(self, node: FuncDef):
         if self._ctx is not None:
             raise RuntimeError('Function definition inside function is not allowed')
+        if node.func_name in self._func_signatures:
+            raise RuntimeError(f'Function redefinition: {node.func_name}')
 
-        params: list[tuple[str, WASMType]] = []
+        params: list[str] = []
+        wasm_params: list[tuple[str, WASMType]] = []
         for var in node.params:
-            params.append((var.id, pytype_to_wasmtype(var.type)))
+            params.append(var.type)
+            wasm_params.append((var.id, pytype_to_wasmtype(var.type)))
+
+        self._func_signatures[node.func_name] = FunctionSignature(params, node.return_type)
 
         self._ctx = FunctionContext(func_name=node.func_name,
                                     is_export=True,
                                     return_type=pytype_to_wasmtype(node.return_type),
-                                    params=params)
+                                    params=wasm_params)
 
         for stmt in node.stmts:
             self.visit(stmt)
@@ -70,8 +81,13 @@ class WASMCodeGen:
         elif node.func_name == 'print':
             return None
         else:
-            # TODO: Support for custom functions
-            return None
+            signature = self._func_signatures[node.func_name]
+            if signature is None:
+                raise RuntimeError(f'Undefined function: {node.func_name}')
+            if signature.return_type == 'None':
+                return None
+            else:
+                return signature.return_type
 
     def visit_FuncCall(self, node: FuncCall):
         if node.func_name == 'int':
@@ -107,19 +123,32 @@ class WASMCodeGen:
                 self._ctx.add_instruction(('f64.ne',))
         elif node.func_name == 'print':
             # Call imported JavaScript function (print_int, print_float, print_bool)
+            if not self._js_funcs_imported:
+                self._add_js_imported_functions()
+
             input_ty = self.infer(node.args[0])
+            self.visit(node.args[0])
             if input_ty == 'int':
-                self.visit(node.args[0])
-                self._ctx.add_instruction(('call', 0))
+                self._ctx.add_instruction(('call', 'print_int'))
             elif input_ty == 'float':
-                self.visit(node.args[0])
-                self._ctx.add_instruction(('call', 1))
+                self._ctx.add_instruction(('call', 'print_float'))
             elif input_ty == 'bool':
-                self.visit(node.args[0])
-                self._ctx.add_instruction(('call', 2))
+                self._ctx.add_instruction(('call', 'print_bool'))
         else:
-            # TODO: Custom functions
-            pass
+            # Custom functions
+            if node.func_name not in self._func_signatures:
+                raise RuntimeError(f'Undefined function: {node.func_name}')
+
+            signature = self._func_signatures[node.func_name]
+
+            for i, arg in enumerate(node.args):
+                arg_ty = self.infer(arg)
+                param_ty = signature.params[i]
+                if arg_ty != param_ty:
+                    raise RuntimeError(f'Function parameter type mismatch: \n'
+                                       f'parameter type {param_ty} with argument type {arg_ty}')
+                self.visit(node.args[0])
+            self._ctx.add_instruction(('call', node.func_name))
 
     def infer_Var(self, node: Var):
         return node.type
