@@ -14,6 +14,8 @@ def get_typehint(var):
     return None
 
 
+FUNC_NAME_BLACKLIST = ('print', 'print_int', 'print_float', 'print_bool')
+
 class ASTTransformer(ast.NodeTransformer):
     def __init__(self):
         pass
@@ -36,6 +38,9 @@ class ASTTransformer(ast.NodeTransformer):
         return body[0]
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
+        if node.name in FUNC_NAME_BLACKLIST:
+            raise RuntimeError(f'Function name {node.name} is reserved and not allowed')
+
         stmts = list(node.body)
         stmts = list(map(self.visit, stmts))
         params = [Var(a.arg, get_typehint(a)) for a in node.args.args]
