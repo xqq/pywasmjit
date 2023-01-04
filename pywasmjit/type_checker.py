@@ -1,11 +1,15 @@
+from typing import Optional
 from .ast import *
+from .utils import FunctionSignature
 
 
 class TypeChecker:
-    __slots__ = ['_locals']
+    __slots__ = ['_current_func_name', '_locals', '_func_signatures']
 
     def __init__(self):
+        self._current_func_name: Optional[str] = None
         self._locals: dict[str, str] = {}  # name => pytype
+        self._func_signatures: dict[str, FunctionSignature] = {}  # func_name => FunctionSignature
 
     def visit(self, node: ast.AST):
         fn = f'visit_{type(node).__name__}'
@@ -21,11 +25,19 @@ class TypeChecker:
         if len(self._locals) > 0:
             raise RuntimeError('Function definition inside function is not allowed')
 
+        self._current_func_name = func.func_name
+
+        sig_params = []
+
         # Add parameters as locals
         for param in func.params:
             if param.type is None:
                 raise RuntimeError('Function parameters must have type annotation')
             self._locals[param.id] = param.type
+            sig_params.append(param.type)
+
+        if func.return_type is not None:
+            self._func_signatures[func.func_name] = FunctionSignature(sig_params, func.return_type)
 
         # Record declared return type into locals for future checking
         self._locals['$return_type_declared'] = func.return_type
@@ -40,7 +52,11 @@ class TypeChecker:
                 # This could be a void function (no return value)
                 func.return_type = 'None'
 
+        sig_params = [param.type for param in func.params]
+        self._func_signatures[func.func_name] = FunctionSignature(sig_params, func.return_type)
+
         self._locals.clear()
+        self._current_func_name = None
         return func.return_type
 
     def visit_FuncDef(self, node: FuncDef):
@@ -89,8 +105,22 @@ class TypeChecker:
 
             return None
         else:
-            # TODO: Support for custom functions
-            return None
+            # Custom functions
+            if node.func_name not in self._func_signatures:
+                if node.func_name == self._current_func_name:
+                    raise RuntimeError(f'Recursive function {node.func_name} must annotate it\'s return type')
+                else:
+                    raise RuntimeError(f'Undefined function: {node.func_name}')
+
+            signature = self._func_signatures[node.func_name]
+
+            for i, arg in enumerate(node.args):
+                arg_ty = self.visit(arg)
+                param_ty = signature.params[i]
+                if arg_ty != param_ty:
+                    raise RuntimeError(f'Function parameter type mismatch: \n'
+                                       f'parameter type {param_ty} with argument type {arg_ty}')
+            return signature.return_type
 
     def visit_Var(self, node: Var):
         if node.id not in self._locals:
