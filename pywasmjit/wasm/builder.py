@@ -60,12 +60,12 @@ class FunctionContext:
         return 0
 
     def dump_locals(self):
-        print('locals:')
+        print('-------locals-------')
         for name, value in self.locals.items():
             print(f'{name}: index={value[0]}, type={value[1]}')
 
     def dump_instructions(self):
-        print('instructions:')
+        print('----instructions----')
         for instr in self.instructions:
             print(instr)
 

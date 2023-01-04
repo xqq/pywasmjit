@@ -4,6 +4,7 @@ from .ast import *
 from .wasm.builder import Builder, FunctionContext
 from .wasm.components import WASMType
 from .utils import FunctionSignature
+from .utils import DEBUG
 
 
 def pytype_to_wasmtype(pytype: str):
@@ -32,7 +33,8 @@ class WASMCodeGen:
         self._builder.add_imported_function('print_bool', [WASMType('i32')], None, 'js', 'print_bool')
         self._js_funcs_imported = True
 
-    def dump(self):
+    def _dump_ctx(self):
+        print(f'================Function {self._ctx.func_name}================')
         self._ctx.dump_locals()
         self._ctx.dump_instructions()
 
@@ -71,6 +73,9 @@ class WASMCodeGen:
 
         for stmt in node.stmts:
             self.visit(stmt)
+
+        if DEBUG:
+            self._dump_ctx()
 
         self._builder.add_function(self._ctx)
         self._ctx = None
