@@ -3,10 +3,9 @@ import types
 import inspect
 from textwrap import dedent
 
-from .utils import debug_print
-
 from .ast import (FuncDef, FuncCall, Var, IntLiteral, FloatLiteral, BoolLiteral, Assign, Expr,
                   Compare, If, BinOp, UnaryOp, While, For, Continue, Break, Return, Pass)
+
 
 def get_typehint(var):
     if hasattr(var, 'annotation') and hasattr(var.annotation, 'id'):
@@ -15,6 +14,7 @@ def get_typehint(var):
 
 
 FUNC_NAME_BLACKLIST = ('print', 'print_int', 'print_float', 'print_bool')
+
 
 class ASTTransformer(ast.NodeTransformer):
     def __init__(self):
@@ -193,9 +193,3 @@ class ASTTransformer(ast.NodeTransformer):
 
     def generic_visit(self, node: ast.AST):
         raise NotImplementedError(ast.dump(node))
-
-
-def fuck(src: str) -> str:
-    transformer = ASTTransformer()
-    tree = transformer.transform(src)
-    return ast.dump(tree, indent=2)
