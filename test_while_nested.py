@@ -1,16 +1,19 @@
-from re import I
 from pywasmjit import wasmjit
 
 
+@wasmjit
 def test_while(x: int) -> int:
+    ret = 0
     i = 0
     while i < x:
-        i = i + 1
+        i += 1
+        j = 0
         while True:
-            if i > 10:
+            j += 1
+            if j >= 10:
+                ret += j
                 break
-        break
-    return i
+    return ret
 
 
-jited = wasmjit(test_while)
+print(test_while(114514))

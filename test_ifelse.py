@@ -1,6 +1,6 @@
 from pywasmjit import wasmjit
 
-
+@wasmjit
 def test_compare(x: int, y: int):
     if x > y:
         x = x + 1
@@ -10,7 +10,8 @@ def test_compare(x: int, y: int):
         return y
     else:
         return y + 1
+    return y + 1
 
 
-jit_func = wasmjit(test_compare)
-
+ret = test_compare(114, 514)
+print(ret)

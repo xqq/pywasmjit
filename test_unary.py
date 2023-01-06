@@ -1,6 +1,6 @@
 from pywasmjit import wasmjit
 
-
+@wasmjit
 def test_add(x: int, y: int) -> int:
     a = x + y
     result = -a
@@ -11,5 +11,4 @@ def test_add(x: int, y: int) -> int:
     return result
 
 
-jit_func = wasmjit(test_add)
-
+print(test_add(114, 514))
