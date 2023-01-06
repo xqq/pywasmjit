@@ -71,12 +71,13 @@ class FunctionContext:
 
 
 class Builder:
-    __slots__ = ['_functions', '_imported_functions', '_current_func_ctx', '_module']
+    __slots__ = ['_functions', '_imported_functions', '_module', '_buffer']
 
     def __init__(self):
         self._functions: list[Function] = []
         self._imported_functions: list[ImportedFunction] = []
         self._module: Optional[Module] = None
+        self._buffer: Optional[bytes] = None
         pass
 
     def add_function(self, ctx: FunctionContext):
@@ -115,7 +116,13 @@ class Builder:
         self._imported_functions.append(func)
 
     def build(self):
-        pass
+        sections = []
+        sections.extend(self._imported_functions)
+        sections.extend(self._functions)
+        self._module = Module(*sections)
+        self._buffer = None
 
     def get_bytes(self):
-        pass
+        if self._buffer is None:
+            self._buffer = self._module.to_bytes()
+        return self._buffer

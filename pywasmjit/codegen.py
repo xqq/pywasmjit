@@ -38,6 +38,12 @@ class WASMCodeGen:
         self._ctx.dump_locals()
         self._ctx.dump_instructions()
 
+    def build(self):
+        self._builder.build()
+
+    def get_bytes(self):
+        return self._builder.get_bytes()
+
     def visit(self, node: ast.AST):
         fn = f'visit_{type(node).__name__}'
         if hasattr(self, fn):
