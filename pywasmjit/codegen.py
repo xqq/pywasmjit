@@ -272,6 +272,8 @@ class WASMCodeGen:
                 op = 'div_s'
             elif left_wasm_ty == 'f64':
                 op = 'div'
+        elif node.op == ast.Mod:
+            op = 'rem_s'
 
         self.visit(node.left)
         self.visit(node.right)

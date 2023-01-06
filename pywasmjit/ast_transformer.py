@@ -125,7 +125,7 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_BinOp(self, node: ast.BinOp):
         op = node.op.__class__
-        if op not in (ast.Add, ast.Sub, ast.Mult, ast.Div):
+        if op not in (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod):
             raise NotImplementedError(f'Unsupported binary operation: {op.__name__}')
         left = self.visit(node.left)
         right = self.visit(node.right)

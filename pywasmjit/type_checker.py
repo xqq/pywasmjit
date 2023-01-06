@@ -199,6 +199,8 @@ class TypeChecker:
             raise RuntimeError(f'Type mismatch: left is \'{left_ty}\', right is \'{right_ty}\'')
         if left_ty not in ('int', 'float'):
             raise RuntimeError(f'Unsupported type for BinOp: \'{left_ty}\'')
+        if node.op == ast.Mod and left_ty != 'int':
+            raise RuntimeError(f'Mod operation only support for int type')
         return left_ty
 
     def visit_UnaryOp(self, node: UnaryOp):
