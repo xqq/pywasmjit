@@ -1,5 +1,4 @@
-DEBUG = True
-
+DEBUG = False
 
 def debug_print(fmt: str, *args):
     if not DEBUG:
