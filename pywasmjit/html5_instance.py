@@ -1,4 +1,4 @@
-import pyodide
+import pyodide.ffi
 import js
 from js import Uint8Array
 from js import WebAssembly
@@ -23,9 +23,9 @@ class HTML5Instance(ExecInstance):
 
         import_funcs = {
             'js': {
-                'print_int': pyodide.create_proxy(print_int),
-                'print_float': pyodide.create_proxy(print_float),
-                'print_bool': pyodide.create_proxy(print_bool)
+                'print_int': pyodide.ffi.create_proxy(print_int),
+                'print_float': pyodide.ffi.create_proxy(print_float),
+                'print_bool': pyodide.ffi.create_proxy(print_bool)
             }
         }
 
