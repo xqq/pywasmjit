@@ -1,7 +1,7 @@
 import time
-
 import pywasmjit
 from pywasmjit import wasmjit
+
 
 @wasmjit
 def test_for(n: int):

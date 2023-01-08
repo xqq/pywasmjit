@@ -1,6 +1,4 @@
 import time
-
-import pywasmjit
 from pywasmjit import wasmjit
 
 
@@ -16,8 +14,6 @@ def fibonacci_nojit(x: int) -> int:
         return 1
     return fibonacci_nojit(x - 1) + fibonacci_nojit(x - 2)
 
-
-pywasmjit.warmup()
 
 ret = fibonacci(0)
 print(ret)

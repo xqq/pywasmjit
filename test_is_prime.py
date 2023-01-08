@@ -1,5 +1,4 @@
 import time
-import pywasmjit
 from pywasmjit import wasmjit
 
 
