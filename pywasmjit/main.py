@@ -81,3 +81,11 @@ def warmup():
         compose_wasm()
     if wasm_exec_instance is None:
         init_instance()
+
+
+def cleanup():
+    global type_checker, codegen, wasm_composed, wasm_exec_instance
+    type_checker = TypeChecker()
+    codegen = WASMCodeGen()
+    wasm_composed = False
+    wasm_exec_instance = None
