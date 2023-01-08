@@ -13,8 +13,6 @@ def test_noreturn(x: int, y: int):
     if m == 3357:
         x = 810
         test_output_float(n)
-        return
-    return
 
 
 test_output_float(114.514)

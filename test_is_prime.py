@@ -17,16 +17,13 @@ def is_prime_nojit(x: int):
             return False
     return True
 
-
-pywasmjit.warmup()
-
 start_time = time.time()
 result = bool(is_prime(169941229))
-cost_time_ms = (time.time() - start_time) * 1000
-print('is_prime(169941229) =', result, f'(elapsed time: {cost_time_ms} ms)')
+elapsed = (time.time() - start_time) * 1000
+print(f'is_prime(169941229) = {result}, elapsed: {elapsed} ms')
 
 start_time = time.time()
-result = bool(is_prime_nojit(169941229))
-cost_time_ms_nojit = (time.time() - start_time) * 1000
-print('is_prime_nojit(169941229) =', result, f'(elapsed time: {cost_time_ms_nojit} ms)')
-print('rate:', 'Infinite' if cost_time_ms == 0 else cost_time_ms_nojit / cost_time_ms)
+result = is_prime_nojit(169941229)
+elapsed_nojit = (time.time() - start_time) * 1000
+print(f'is_prime_nojit(169941229) = {result}, elapsed: {elapsed_nojit} ms')
+print('rate:', 'Infinite' if elapsed == 0 else elapsed_nojit / elapsed)
