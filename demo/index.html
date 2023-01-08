@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+
+		<title>pywasmjit Playground</title>
+
+		<link data-inline="yes-please" href="./lib/bootstrap-cosmo.css" rel="stylesheet" />
+		<link data-inline="yes-please" href="./lib/bootstrap-responsive.min.css" rel="stylesheet" />
+		<link data-inline="yes-please" href="./all.css" rel="stylesheet" type="text/css" />
+		<link data-inline="yes-please" href="./spinner.css" rel="stylesheet" />
+		<link data-inline="yes-please" href="./demo.css" rel="stylesheet" />
+
+		<link
+			data-name="vs/editor/editor.main"
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/editor/editor.main.css"
+		/>
+	</head>
+	<body class="playground-page">
+		<pre data-preload="../test_add.py"></pre>
+
+		<nav class="navbar navbar-inverse navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="container">
+					<div class="logo">
+						<a href="index.html">pywasmjit demo</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+		<div id="loading">
+			<div class="spinner">
+				<div class="rect1"></div>
+				<div class="rect2"></div>
+				<div class="rect3"></div>
+				<div class="rect4"></div>
+				<div class="rect5"></div>
+			</div>
+		</div>
+
+		<section id="playground"></section>
+
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+			integrity="sha256-wS9gmOZBqsqWxgIVgA8Y9WcQOa7PgSIX+rPA0VL2rbQ="
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.0/bootstrap.min.js"
+			integrity="sha256-u+l2mGjpmGK/mFgUncmMcFKdMijvV+J3odlDJZSNUu8="
+			crossorigin="anonymous"
+		></script>
+
+		<script>
+			var require = { paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } };
+		</script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/editor/editor.main.nls.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/editor/editor.main.js"></script>
+
+		<script data-inline="yes-please" src="./all.js"></script>
+		<script data-inline="yes-please" src="./demo.js"></script>
+	</body>
+</html>
