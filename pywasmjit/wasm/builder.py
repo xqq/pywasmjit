@@ -15,7 +15,7 @@ class FunctionContext:
         self.params = params
 
         self.instructions: list[tuple[str, ...]] = []
-        self.locals: OrderedDict[str, [int, WASMType]] = OrderedDict()  # name => (index, type)
+        self.locals: OrderedDict[str, tuple[int, WASMType]] = OrderedDict()  # name => (index, type)
         self._local_count: int = 0
         self._block_stack: list[str] = []
 
