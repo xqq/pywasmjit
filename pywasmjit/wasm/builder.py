@@ -75,7 +75,7 @@ class Builder:
 
     def __init__(self):
         self._functions: list[Function] = []
-        self._imported_functions: list[ImportedFunction] = []
+        self._imported_functions: OrderedDict[str, ImportedFunction] = OrderedDict()  # name => ImportedFunction
         self._module: Optional[Module] = None
         self._buffer: Optional[bytes] = None
         pass
@@ -113,11 +113,15 @@ class Builder:
                                 returns=wasm_returns,
                                 modname=modname,
                                 fieldname=fieldname)
-        self._imported_functions.append(func)
+        self._imported_functions[func_name] = func
+
+    def is_function_imported(self, func_name: str) -> bool:
+        if func_name in self._imported_functions:
+            return True
+        return False
 
     def build(self):
-        sections = []
-        sections.extend(self._imported_functions)
+        sections: list = [func for _, func in self._imported_functions.items()]
         sections.extend(self._functions)
         self._module = Module(*sections)
         self._buffer = None

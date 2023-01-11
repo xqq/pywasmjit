@@ -3,35 +3,23 @@ from typing import Optional
 from .ast import *
 from .wasm.builder import Builder, FunctionContext
 from .wasm.components import WASMType
+from .callback_pool import CallbackPool
+from .utils import pytype_to_wasmtype
 from .utils import FunctionSignature
 from .utils import DEBUG
 
 
-def pytype_to_wasmtype(pytype: str):
-    if pytype == 'int' or pytype == 'bool':
-        return WASMType('i32')
-    elif pytype == 'float':
-        return WASMType('f64')
-    elif pytype is None or pytype == 'None':
-        return None
-    else:
-        raise RuntimeError(f'Unsupported type: {pytype}')
-
-
 class WASMCodeGen:
-    _fields = ['_builder', '_ctx']
+    _fields = ['_callback_pool', '_builder', '_ctx']
 
-    def __init__(self):
+    def __init__(self, callback_pool: CallbackPool):
+        self._callback_pool = callback_pool
         self._builder = Builder()
         self._ctx: Optional[FunctionContext] = None
         self._func_signatures: dict[str, FunctionSignature] = {}  # func_name => FunctionSignature
-        self._js_funcs_imported = False
 
-    def _add_js_imported_functions(self):
-        self._builder.add_imported_function('print_int', [WASMType('i32')], None, 'js', 'print_int')
-        self._builder.add_imported_function('print_float', [WASMType('f64')], None, 'js', 'print_float')
-        self._builder.add_imported_function('print_bool', [WASMType('i32')], None, 'js', 'print_bool')
-        self._js_funcs_imported = True
+    def _add_callback_imported_function(self, func_name: str, wasm_sig: FunctionSignature):
+        self._builder.add_imported_function(func_name, wasm_sig.params, wasm_sig.return_type, 'callback', func_name)
 
     def _dump_ctx(self):
         print(f'================Function {self._ctx.func_name}================')
@@ -92,9 +80,13 @@ class WASMCodeGen:
         elif node.func_name == 'print':
             return None
         else:
-            signature = self._func_signatures[node.func_name]
-            if signature is None:
+            if node.func_name in self._func_signatures:
+                signature = self._func_signatures[node.func_name]
+            elif node.func_name in self._callback_pool.callbacks:
+                signature = self._callback_pool.query_py_signature(node.func_name)
+            else:
                 raise RuntimeError(f'Undefined function: {node.func_name}')
+
             if signature.return_type == 'None':
                 return None
             else:
@@ -134,23 +126,32 @@ class WASMCodeGen:
                 self._ctx.add_instruction(('f64.ne',))
         elif node.func_name == 'print':
             # Call imported JavaScript function (print_int, print_float, print_bool)
-            if not self._js_funcs_imported:
-                self._add_js_imported_functions()
-
             input_ty = self.infer(node.args[0])
             self.visit(node.args[0])
             if input_ty == 'int':
+                if not self._builder.is_function_imported('print_int'):
+                    self._builder.add_imported_function('print_int', [WASMType('i32')], None, 'js', 'print_int')
                 self._ctx.add_instruction(('call', 'print_int'))
             elif input_ty == 'float':
+                if not self._builder.is_function_imported('print_float'):
+                    self._builder.add_imported_function('print_float', [WASMType('f64')], None, 'js', 'print_float')
                 self._ctx.add_instruction(('call', 'print_float'))
             elif input_ty == 'bool':
+                if not self._builder.is_function_imported('print_bool'):
+                    self._builder.add_imported_function('print_bool', [WASMType('i32')], None, 'js', 'print_bool')
                 self._ctx.add_instruction(('call', 'print_bool'))
         else:
-            # Custom functions
-            if node.func_name not in self._func_signatures:
+            if node.func_name in self._func_signatures:
+                # Custom functions
+                signature = self._func_signatures[node.func_name]
+            elif node.func_name in self._callback_pool.callbacks:
+                # Callback functions
+                if not self._builder.is_function_imported(node.func_name):
+                    wasm_sig = self._callback_pool.query_wasm_signature(node.func_name)
+                    self._add_callback_imported_function(node.func_name, wasm_sig)
+                signature = self._callback_pool.query_py_signature(node.func_name)
+            else:
                 raise RuntimeError(f'Undefined function: {node.func_name}')
-
-            signature = self._func_signatures[node.func_name]
 
             for i, arg in enumerate(node.args):
                 arg_ty = self.infer(arg)
@@ -158,7 +159,7 @@ class WASMCodeGen:
                 if arg_ty != param_ty:
                     raise RuntimeError(f'Function parameter type mismatch: \n'
                                        f'parameter type {param_ty} with argument type {arg_ty}')
-                self.visit(node.args[0])
+                self.visit(node.args[i])
             self._ctx.add_instruction(('call', node.func_name))
 
     def infer_Var(self, node: Var):
