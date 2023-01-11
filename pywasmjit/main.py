@@ -1,7 +1,5 @@
 import sys
 import ast
-import inspect
-from textwrap import dedent
 from typing import Optional
 
 from .ast_transformer import ASTTransformer

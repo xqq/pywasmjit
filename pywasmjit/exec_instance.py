@@ -1,5 +1,6 @@
 from .callback_pool import CallbackPool
 
+
 class ExecInstance:
     def __init__(self, callback_pool: CallbackPool, buf: bytes):
         pass

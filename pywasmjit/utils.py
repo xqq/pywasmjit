@@ -4,6 +4,7 @@ from .wasm.components import WASMType
 
 DEBUG = False
 
+
 def debug_print(fmt: str, *args):
     if not DEBUG:
         return

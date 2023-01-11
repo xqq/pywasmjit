@@ -10,8 +10,10 @@ from .exec_instance import ExecInstance
 def print_int(x: int) -> None:
     print(x)
 
+
 def print_float(x: float) -> None:
     print(x)
+
 
 def print_bool(x: int) -> None:
     b = bool(x)
