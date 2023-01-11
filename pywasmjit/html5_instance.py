@@ -3,6 +3,7 @@ import js
 from js import Uint8Array
 from js import WebAssembly
 
+from .callback_pool import CallbackPool
 from .exec_instance import ExecInstance
 
 
@@ -18,8 +19,8 @@ def print_bool(x: int) -> None:
 
 
 class HTML5Instance(ExecInstance):
-    def __init__(self, buf: bytes):
-        super().__init__(buf)
+    def __init__(self, callback_pool: CallbackPool, buf: bytes):
+        super().__init__(callback_pool, buf)
 
         import_funcs = {
             'js': {
@@ -29,6 +30,13 @@ class HTML5Instance(ExecInstance):
             }
         }
 
+        if len(callback_pool.callbacks) > 0:
+            import_funcs['callback'] = {}
+
+        for func_name, value in callback_pool.callbacks.items():
+            func = value[0]
+            import_funcs['callback'][func_name] = pyodide.ffi.create_proxy(func)
+
         self._import_object = pyodide.ffi.to_js(import_funcs, dict_converter=js.Object.fromEntries)
 
         jsbuf = Uint8Array.new(len(buf))
@@ -37,7 +45,7 @@ class HTML5Instance(ExecInstance):
         self._module = WebAssembly.Module.new(jsbuf)
         self._instance = WebAssembly.Instance.new(self._module, self._import_object)
 
-    def exec_function(self, func_name, *args):
+    def exec_function(self, func_name: str, *args):
         wasm_func = getattr(self._instance.exports, func_name)
         if wasm_func is None:
             raise RuntimeError(f'Function \'{func_name}\' not found in runtime')
