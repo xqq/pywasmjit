@@ -1,12 +1,14 @@
 from typing import Optional
 from .ast import *
+from .callback_pool import CallbackPool
 from .utils import FunctionSignature
 
 
 class TypeChecker:
-    __slots__ = ['_current_func_name', '_locals', '_func_signatures']
+    __slots__ = ['_callback_pool', '_current_func_name', '_locals', '_func_signatures']
 
-    def __init__(self):
+    def __init__(self, callback_pool: CallbackPool):
+        self._callback_pool = callback_pool
         self._current_func_name: Optional[str] = None
         self._locals: dict[str, str] = {}  # name => pytype
         self._func_signatures: dict[str, FunctionSignature] = {}  # func_name => FunctionSignature
@@ -105,14 +107,19 @@ class TypeChecker:
 
             return None
         else:
-            # Custom functions
-            if node.func_name not in self._func_signatures:
+            signature = None
+            if node.func_name in self._func_signatures:
+                # Custom functions
+                signature = self._func_signatures[node.func_name]
+            elif node.func_name in self._callback_pool.callbacks:
+                # Callback functions
+                signature = self._callback_pool.query_py_signature(node.func_name)
+            else:
+                # Error
                 if node.func_name == self._current_func_name:
                     raise RuntimeError(f'Recursive function {node.func_name} must annotate it\'s return type')
                 else:
                     raise RuntimeError(f'Undefined function: {node.func_name}')
-
-            signature = self._func_signatures[node.func_name]
 
             for i, arg in enumerate(node.args):
                 arg_ty = self.visit(arg)
