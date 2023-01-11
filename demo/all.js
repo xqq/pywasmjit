@@ -8,6 +8,12 @@
 		},
 		{
 			chapter: '-',
+			name: 'Callback',
+			id: 'test-callback',
+			path: '../test_callback.py'
+		},
+		{
+			chapter: '-',
 			name: 'Fibonacci',
 			id: 'test-fibonacci',
 			path: '../test_fibonacci.py'
