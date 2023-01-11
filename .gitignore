@@ -4,6 +4,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Jetbrains
+.idea/
+
+# Pyodide venv
+.pyodide-xbuildenv/
+
+# debug.wasm
+debug.wasm
+
 # C extensions
 *.so
 
