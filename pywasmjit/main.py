@@ -5,6 +5,7 @@ from textwrap import dedent
 from typing import Optional
 
 from .ast_transformer import ASTTransformer
+from .callback_pool import CallbackPool
 from .codegen import WASMCodeGen
 from .exec_instance import ExecInstance
 from .type_checker import TypeChecker
@@ -16,8 +17,9 @@ else:
     from .wasmer_instance import WasmerInstance
 
 
-type_checker = TypeChecker()
-codegen = WASMCodeGen()
+callback_pool = CallbackPool()
+type_checker = TypeChecker(callback_pool)
+codegen = WASMCodeGen(callback_pool)
 
 wasm_composed = False
 wasm_exec_instance: Optional[ExecInstance] = None
@@ -53,6 +55,11 @@ def create_func_wrapper(ast):
     return wrapper
 
 
+def wasmreg(func):
+    callback_pool.add_callback(func)
+    return func
+
+
 def compose_wasm():
     codegen.build()
     buf = codegen.get_bytes()
@@ -71,9 +78,9 @@ def init_instance():
 
     global wasm_exec_instance
     if 'pyodide' in sys.modules or sys.platform == 'emscripten':
-        wasm_exec_instance = HTML5Instance(buf)
+        wasm_exec_instance = HTML5Instance(callback_pool, buf)
     else:
-        wasm_exec_instance = WasmerInstance(buf)
+        wasm_exec_instance = WasmerInstance(callback_pool, buf)
 
 
 def warmup():
@@ -84,8 +91,9 @@ def warmup():
 
 
 def cleanup():
-    global type_checker, codegen, wasm_composed, wasm_exec_instance
-    type_checker = TypeChecker()
-    codegen = WASMCodeGen()
+    global callback_pool, type_checker, codegen, wasm_composed, wasm_exec_instance
     wasm_composed = False
     wasm_exec_instance = None
+    callback_pool = CallbackPool()
+    type_checker = TypeChecker(callback_pool)
+    codegen = WASMCodeGen(callback_pool)
