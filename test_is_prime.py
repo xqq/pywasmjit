@@ -16,13 +16,14 @@ def is_prime_nojit(x: int):
             return False
     return True
 
-start_time = time.time()
+
+start_time = time.perf_counter()
 result = bool(is_prime(169941229))
-elapsed = (time.time() - start_time) * 1000
+elapsed = (time.perf_counter() - start_time) * 1000
 print(f'is_prime(169941229) = {result}, elapsed: {elapsed} ms')
 
-start_time = time.time()
+start_time = time.perf_counter()
 result = is_prime_nojit(169941229)
-elapsed_nojit = (time.time() - start_time) * 1000
+elapsed_nojit = (time.perf_counter() - start_time) * 1000
 print(f'is_prime_nojit(169941229) = {result}, elapsed: {elapsed_nojit} ms')
 print('rate:', 'Infinite' if elapsed == 0 else elapsed_nojit / elapsed)
