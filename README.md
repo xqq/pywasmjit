@@ -22,7 +22,7 @@ Import this library and just add `@wasmjit` decorator to your function to speed 
 - Callback to python functions by adding `@wasmreg`
 
 ## Demo
-https://xqq.github.io/pywasmjit/demo/
+[https://xqq.github.io/pywasmjit/demo/](https://xqq.github.io/pywasmjit/demo/)
 
 ## Performance
 Tested under Apple M1 Pro, Google Chrome 111.0.5563.8
